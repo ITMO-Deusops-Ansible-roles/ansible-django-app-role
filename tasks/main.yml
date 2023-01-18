@@ -1,0 +1,42 @@
+---
+- name: Creating a symlink
+  become: yes
+  ansible.builtin.file:
+    src: "/usr/bin/python3"
+    dest: "/usr/bin/python"
+    state: link
+- name: Clone a github repository
+  git:
+    repo: https://github.com/mdn/django-locallibrary-tutorial.git
+    dest: "~/project"
+    clone: yes
+    force: yes
+- name: Update modification and access time of given file
+  ansible.builtin.file:
+    path: ~/project
+    state: directory
+    recurse: yes
+    mode: '777'
+- name: Install requirements project
+  pip:
+    requirements: ~/project/requirements.txt
+- name: Make migration
+  community.general.django_manage:
+    command: makemigrations
+    project_path: "~/project"
+- name: Migrate
+  community.general.django_manage:
+    command: migrate
+    project_path: "~/project"
+- name: Collectstatic
+  community.general.django_manage:
+    command: collectstatic
+    project_path: "~/project"
+- name: Test
+  community.general.django_manage:
+    command: test
+    project_path: "~/project"
+- name: Run server
+  shell: "~/project/manage.py runserver {{ django_app_port }} &"
+  async: 45
+  poll: 0
